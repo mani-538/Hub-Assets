@@ -12,6 +12,8 @@ import Signup from "@/pages/auth/Signup";
 import VerifyOtp from "@/pages/auth/VerifyOtp";
 import PersonalDetails from "@/pages/auth/PersonalDetails";
 import Login from "@/pages/auth/Login";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
 
 import StudentDashboard from "@/pages/student/Dashboard";
 import StudentProjects from "@/pages/student/Projects";
@@ -85,6 +87,8 @@ function Router() {
       <Route path="/verify-otp"><PublicOnlyRoute component={VerifyOtp} /></Route>
       <Route path="/personal-details"><PublicOnlyRoute component={PersonalDetails} /></Route>
       <Route path="/login"><PublicOnlyRoute component={Login} /></Route>
+      <Route path="/forgot-password"><PublicOnlyRoute component={ForgotPassword} /></Route>
+      <Route path="/reset-password"><PublicOnlyRoute component={ResetPassword} /></Route>
 
       {/* Student Routes */}
       <Route path="/student/dashboard"><ProtectedRoute component={StudentDashboard} allowedRole="student" /></Route>

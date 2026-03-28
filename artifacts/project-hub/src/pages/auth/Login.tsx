@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { AuthLayout } from "@/components/layout/AuthLayout";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetMeQueryKey } from "@workspace/api-client-react";
 
@@ -41,7 +41,8 @@ export default function Login() {
           }
         },
         onError: (err) => {
-          toast({ title: "Login Failed", description: err.error?.error || "Invalid credentials", variant: "destructive" });
+          const msg = (err as any).data?.error || (err as any).message || "Invalid credentials";
+          toast({ title: "Login Failed", description: msg, variant: "destructive" });
         },
       }
     );
@@ -59,6 +60,9 @@ export default function Login() {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="password">Password</Label>
+            <Link href="/forgot-password" className="text-xs text-primary hover:underline font-medium">
+              Forgot password?
+            </Link>
           </div>
           <Input id="password" type="password" placeholder="••••••••" {...form.register("password")} />
           {form.formState.errors.password && <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>}

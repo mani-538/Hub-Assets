@@ -186,6 +186,56 @@ router.post("/auth/login", async (req: Request, res): Promise<void> => {
   res.json(LoginResponse.parse({ message: "Login successful", user: userResponse }));
 });
 
+// POST /auth/forgot-password
+router.post("/auth/forgot-password", async (req: Request, res): Promise<void> => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (!user) {
+    res.status(404).json({ error: "No account found with this email" });
+    return;
+  }
+
+  const otp = generateOtp();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  await db.update(usersTable).set({ otp, otpExpiresAt }).where(eq(usersTable.email, email));
+
+  req.log.info({ email, otp }, `Password reset OTP for ${email}: ${otp}`);
+  res.json({ message: "OTP generated for password reset", otp });
+});
+
+// POST /auth/reset-password
+router.post("/auth/reset-password", async (req: Request, res): Promise<void> => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    res.status(400).json({ error: "Email, OTP and new password are required" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (!user) {
+    res.status(404).json({ error: "No account found with this email" });
+    return;
+  }
+  if (user.otp !== otp) {
+    res.status(400).json({ error: "Invalid OTP" });
+    return;
+  }
+  if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) {
+    res.status(400).json({ error: "OTP has expired. Please request a new one." });
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await db.update(usersTable).set({ password: hashedPassword, otp: null, otpExpiresAt: null }).where(eq(usersTable.email, email));
+
+  res.json({ message: "Password reset successfully. You can now log in." });
+});
+
 // POST /auth/logout
 router.post("/auth/logout", (req: Request, res): void => {
   req.session.destroy(() => {
