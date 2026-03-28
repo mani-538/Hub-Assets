@@ -40,7 +40,8 @@ export default function Signup() {
           setLocation(`/verify-otp?email=${encodeURIComponent(values.email)}&otp=${encodeURIComponent(otp)}`);
         },
         onError: (err) => {
-          toast({ title: "Error", description: (err as any).error?.error || "Failed to sign up", variant: "destructive" });
+          const msg = (err as any).data?.error || (err as any).message || "Failed to sign up";
+          toast({ title: "Signup failed", description: msg, variant: "destructive" });
         },
       }
     );

@@ -42,14 +42,30 @@ router.post("/auth/signup", async (req: Request, res): Promise<void> => {
     .from(usersTable)
     .where(or(eq(usersTable.email, email), eq(usersTable.username, username)));
 
+  const otp = generateOtp();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
   if (existing.length > 0) {
+    const existingUser = existing[0];
+
+    // If the user exists but is not yet verified, allow re-signup with a fresh OTP
+    if (!existingUser.isVerified && existingUser.email === email) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db
+        .update(usersTable)
+        .set({ password: hashedPassword, username, role, otp, otpExpiresAt })
+        .where(eq(usersTable.email, email));
+      req.log.info({ email, otp }, `Resent OTP for ${email}: ${otp}`);
+      res.status(201).json({ message: `New OTP generated. Your OTP is: ${otp}`, otp });
+      return;
+    }
+
+    // Already verified or different user with same username/email
     res.status(400).json({ error: "Email or username already exists" });
     return;
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const otp = generateOtp();
-  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   await db.insert(usersTable).values({
     email,
