@@ -16,7 +16,7 @@ export function Navbar() {
     logout.mutate(undefined, {
       onSuccess: () => {
         queryClient.clear();
-        setLocation("/login");
+        setLocation("/role-select");
         toast({ title: "Logged out successfully" });
       },
     });
