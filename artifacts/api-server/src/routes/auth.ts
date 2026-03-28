@@ -61,10 +61,11 @@ router.post("/auth/signup", async (req: Request, res): Promise<void> => {
     isVerified: false,
   });
 
-  // Print OTP to console (in lieu of email sending)
+  // Log OTP to console as fallback
   req.log.info({ email, otp }, `OTP for ${email}: ${otp}`);
 
-  res.status(201).json({ message: `Account created. Your OTP is: ${otp} (check server console)` });
+  // Return the OTP in the response so the frontend can display it directly
+  res.status(201).json({ message: `Account created successfully. Your OTP is: ${otp}`, otp });
 });
 
 // POST /auth/verify-otp

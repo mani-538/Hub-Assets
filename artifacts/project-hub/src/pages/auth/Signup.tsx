@@ -20,7 +20,7 @@ export default function Signup() {
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
   const role = (searchParams.get("role") as "student" | "admin") || "student";
-  
+
   const { toast } = useToast();
   const signupMutation = useSignup();
 
@@ -33,12 +33,14 @@ export default function Signup() {
     signupMutation.mutate(
       { data: { ...values, role } },
       {
-        onSuccess: () => {
-          toast({ title: "Account created!", description: "Please check your console for the OTP." });
-          setLocation(`/verify-otp?email=${encodeURIComponent(values.email)}`);
+        onSuccess: (res) => {
+          // Extract OTP from response and pass it to the verify page
+          const otp = (res as any).otp || "";
+          toast({ title: "Account created!", description: "Your OTP is shown on the next screen." });
+          setLocation(`/verify-otp?email=${encodeURIComponent(values.email)}&otp=${encodeURIComponent(otp)}`);
         },
         onError: (err) => {
-          toast({ title: "Error", description: err.error?.error || "Failed to sign up", variant: "destructive" });
+          toast({ title: "Error", description: (err as any).error?.error || "Failed to sign up", variant: "destructive" });
         },
       }
     );

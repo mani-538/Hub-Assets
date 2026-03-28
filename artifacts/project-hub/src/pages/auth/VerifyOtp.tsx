@@ -10,20 +10,21 @@ import { AuthLayout } from "@/components/layout/AuthLayout";
 import { useSearch, useLocation } from "wouter";
 
 const otpSchema = z.object({
-  otp: z.string().length(6, "OTP must be exactly 6 characters"),
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
 export default function VerifyOtp() {
   const [, setLocation] = useLocation();
   const searchParams = new URLSearchParams(useSearch());
   const email = searchParams.get("email") || "";
-  
+  const generatedOtp = searchParams.get("otp") || "";
+
   const { toast } = useToast();
   const verifyMutation = useVerifyOtp();
 
   const form = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
-    defaultValues: { otp: "" },
+    defaultValues: { otp: generatedOtp },
   });
 
   const onSubmit = (values: z.infer<typeof otpSchema>) => {
@@ -35,24 +36,33 @@ export default function VerifyOtp() {
           setLocation(`/personal-details?email=${encodeURIComponent(email)}`);
         },
         onError: (err) => {
-          toast({ title: "Error", description: err.error?.error || "Invalid OTP", variant: "destructive" });
+          toast({ title: "Error", description: (err as any).error?.error || "Invalid OTP", variant: "destructive" });
         },
       }
     );
   };
 
   return (
-    <AuthLayout title="Verify Your Email" subtitle={`We've sent a code to ${email}`}>
+    <AuthLayout title="Verify Your Email" subtitle={`Enter the OTP for ${email}`}>
+      {/* OTP display box */}
+      {generatedOtp && (
+        <div className="mb-6 rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Your OTP Code</p>
+          <p className="text-4xl font-mono font-bold tracking-[0.3em] text-primary select-all">{generatedOtp}</p>
+          <p className="text-xs text-muted-foreground mt-2">This code has been pre-filled below. Valid for 10 minutes.</p>
+        </div>
+      )}
+
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="otp">Verification Code</Label>
-          <Input 
-            id="otp" 
-            type="text" 
+          <Input
+            id="otp"
+            type="text"
             maxLength={6}
-            placeholder="123456" 
+            placeholder="123456"
             className="text-center text-2xl tracking-widest font-mono"
-            {...form.register("otp")} 
+            {...form.register("otp")}
           />
           {form.formState.errors.otp && <p className="text-sm text-destructive">{form.formState.errors.otp.message}</p>}
         </div>
